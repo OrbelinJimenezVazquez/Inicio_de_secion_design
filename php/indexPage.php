@@ -1,0 +1,774 @@
+<?php
+// Incluir el archivo de conexión a la base de datos
+require 'conexion.php';
+
+// Consulta SQL para seleccionar todos los registros de la tabla de compras
+$sql = "SELECT * FROM compras";
+$resultado = mysqli_query($conexion, $sql);
+
+// Verificar si la consulta fue exitosa
+if ($resultado) {
+    // Inicializar un array para almacenar los datos de las compras
+    $compras = [];
+    $totalComprasAnio = 0;
+    $totalComprasMes = 0;
+
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+        // Formatear la fecha de compra
+        $fechaCompra = date('d/m/Y', strtotime($fila['diaCompra']));
+
+        // Agregar los datos formateados al array
+        $fila['diaCompra'] = $fechaCompra;
+        $compras[] = $fila;
+
+        // Sumar el precio de cada compra al total por año y por mes
+        $totalComprasAnio += $fila['precio'];
+        
+        // Convertir la fecha de compra a un objeto DateTime
+$fechaCompraObj = DateTime::createFromFormat('d/m/Y', $fila['diaCompra']);
+
+// Verificar si la conversión fue exitosa
+if ($fechaCompraObj !== false) {
+    // Obtener el año y el mes de la fecha de compra
+    $anioCompra = $fechaCompraObj->format('Y');
+    $mesCompra = $fechaCompraObj->format('m');
+    
+    // Obtener el año y el mes actual
+    $anioActual = date('Y');
+    $mesActual = date('m');
+    
+    // Si la compra es del año y mes actual, sumar su precio al total del mes
+    if ($anioCompra == $anioActual && $mesCompra == $mesActual) {
+        $totalComprasMes += $fila['precio'];
+    }
+} else {
+}
+        // Obtener el año y el mes actual
+        $anioActual = date('Y');
+        $mesActual = date('m');
+        
+        // Si la compra es del año y mes actual, sumar su precio al total del mes
+        if ($anioCompra == $anioActual && $mesCompra == $mesActual) {
+            $totalComprasMes += $fila['precio'];
+        }
+        echo '<script>';
+        echo 'console.log("Datos de compras:", ' . json_encode($compras) . ');';
+        echo '</script>';
+    }
+} else {
+    // Manejar el caso en que la consulta no sea exitosa
+    $error = mysqli_error($conexion);
+    echo "Error en la consulta: $error";
+}
+// Cerrar la conexión a la base de datos
+mysqli_close($conexion);
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="robots" content="noindex">
+    <title>Saving Purchase</title>
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+    <style>
+        .circle-container {
+          text-align: center;
+          justify-content: center;
+          margin-top: 15vh;
+          display: flex;
+        }
+        .circle {
+          width: 300px;
+          height: 300px;
+          background-color: #708090;
+          border-radius: 60%;
+          color: white;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }      
+         .inner-circle {
+          width: 290px; /* Ancho del círculo interior */
+          height: 290px; /* Altura del círculo interior */
+          background-color: #FFFF; 
+          border-radius: 50%; 
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+        .circleMinus {
+          width: 200px;
+          height: 200px;
+          background-color: #2C3E50;
+          border-radius: 50%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+        .inner-circleMinus{
+          width: 188px;
+          height: 188px; 
+          background-color: #FFFF;
+          border-radius: 50%; 
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          text-align: center;
+          line-height: 1;
+        }      
+        .font-small {
+          font-size: 90px;
+        }
+        .font-medium {
+          font-size: 60px;
+        }
+        .font-large {
+          font-size: 50px;
+        }
+        .font-million {
+          font-size: 40px;
+        }
+        .dialog-item {
+          margin-bottom: 10px;
+          font-size: 16px;
+        }
+        .switch-container {
+          display: flex;
+          align-items: center;
+        }
+        .switch {
+          margin-right: 10px;
+        }
+    </style>
+</head>
+
+
+
+<body>
+    <div id="app">
+        <v-app>
+            <!-- Barra de navegación -->
+            <v-app-bar absolute color="#005187" dark class="px-4 text-center" >
+                <img src="saving_purchases.svg" alt="Saving_purchase" style="height: 64px; margin-right: 48px;">
+                <template style="height: 84px">
+                    <v-tabs v-model="tab" class="d-flex justify-center" @change="updateTab">
+                        <v-tab value="gastos">Gastos</v-tab>
+                        <v-tab value="compras">Compras</v-tab>
+                    </v-tabs>
+                </template>
+            </v-app-bar>
+
+            <v-container v-if="tab === 1">
+                <br><br><br>
+                <v-col>
+                  <v-row align="center">
+                    <v-col cols="6">
+                      <v-btn prepend-icon="$vuetify" @click="dialog = true">
+                      <v-icon>mdi-plus</v-icon> Añadir
+                      </v-btn>
+                    </v-col>
+                    <v-col cols="8">
+                      <v-text-field v-model="search" label="no° seguimiento" clearable @keydown.enter="searching"></v-text-field>
+                    </v-col>
+                  </v-row>
+                </v-col>
+
+                <v-dialog v-model="dialog" max-width="80%">
+                    <v-card elevation="3" variant="outlined">
+                        <v-progress-linear indeterminate :height="15" v-if="mostrarProgress" ></v-progress-linear>
+                        <v-card-title >Añadir nuevo articulo</v-card-title>
+                        <v-card-text>
+                        <form @submit.prevent="submitForm">
+                          <v-text-field
+                            label="Nombre"
+                            :rules="requiredRules"
+                            v-model="name"                            
+                          ></v-text-field>
+                          <v-text-field
+                            label="Imagen (URL)"
+                            :rules="imageRules"
+                            v-model="img"                            
+                          ></v-text-field>
+                          <v-text-field
+                            label="Empresa"
+                            :rules="requiredRules"
+                            v-model="empresa"                            
+                          ></v-text-field>
+                            <v-menu
+                              v-model="menu2"
+                              :close-on-content-click="false"
+                              :nudge-right="40"
+                              transition="scale-transition"
+                              offset-y
+                              min-width="auto"
+                            >
+                              <template v-slot:activator="{ on, attrs }">
+                              <v-text-field
+                                v-model="date"
+                                label="fecha de compra"
+                                prepend-icon="mdi-calendar"
+                                v-bind="attrs"
+                                v-on="on"
+                                :rules="requiredRules"                                
+                              ></v-text-field>
+                              </template>
+                              <v-date-picker
+                                v-model="date"
+                                @input="menu2 = false"
+                              ></v-date-picker>
+                              </v-menu>
+                           <v-text-field
+                             :rules="requiredRules"                           
+                            label="no. seguimiento"
+                             v-model="seguimiento"                            
+                           ></v-text-field>
+                           <v-text-field
+                            label="Precio"
+                            model-value="10.00"
+                            prefix="$"
+                            :rules="numberRules"
+                            v-model="precio"                            
+                           ></v-text-field>
+                           <v-btn
+                            class="me-4"
+                            type="submit"
+                           >
+                              submit
+                           </v-btn>
+                        </form>
+                    </v-card-text>
+                    <v-card-actions>
+                        <v-btn color="primary" text @click="dialog = false">Cerrar</v-btn>
+                    </v-card-actions>
+                    </v-card>
+                </v-dialog>
+
+                <v-data-table :headers="headers" :items="hoja1" item-key="id">
+                    <template v-slot:item.estado="{ item }">
+                        <v-switch :disabled="true" v-model="item.estado"></v-switch>
+                    </template>
+                    <template v-slot:item.precio="{ item }">
+                        ${{ item.precio }}
+                    </template>
+                    <template v-slot:item.diaCompra="{ item }">
+                        {{ item.diaCompra }}
+                    </template>
+                </v-data-table>
+            </v-container>
+
+            <v-container v-else>
+                <br/>
+                <div class="circle-container">
+                    <div class="circle">
+                        <div class="inner-circle" >
+                            <span style="color: black; font-size: 60px; text-align: center; line-height: 1;">
+                                <div><p class="text-h2" >Año</p></div>
+                                <div><p :class="fontSizeClass(totalAnioCompras)">${{ totalAnioFormatted }}</p></div>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="circleMinus">
+                        <div class="inner-circleMinus">
+                            <span style="color: black; font-size: 30px; text-align: center; line-height: 1;">
+                                <div><p class="text-h4" >Mes</p></div>
+                                <div><p :class="fontSizeClass(totalMes)">${{ totalMesFormatted }}</p></div>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </v-container>
+
+            <v-dialog v-model="dialogItem" max-width="600">
+                <v-card v-if="product">
+                    <v-progress-linear indeterminate :height="15" v-if="progressConfirm" ></v-progress-linear>
+                    <v-card-title class="headline">{{ product.nombre }}</v-card-title>
+                    <v-card-text>
+                        <div class="dialog-item">
+                            <strong>Empresa:</strong> {{ product.empresa }}
+                        </div>
+                        <div class="dialog-item">
+                            <strong>Día de compra:</strong> {{ product.diaDeCompra }}
+                        </div>
+                        <div class="dialog-item">
+                            <strong>Precio:</strong> ${{ product.precio }}
+                        </div>
+                        <div class="dialog-item">
+                            <strong>No. seguimiento:</strong> 
+                            <a :href="'https://parcelsapp.com/en/tracking/' + product.seguimiento">{{ product.seguimiento }}</a>
+                        </div>
+                        <div class="dialog-item">
+                            <strong>Estado:</strong> 
+                            <div class="switch-container">
+                                <v-switch class="switch" v-model="product_estado" @click="confirmSwitchChange"></v-switch>
+                                <span>{{ product_estado ? 'ENTREGADO ' : 'NO ENTREGADO ' }}</span>
+                                <span v-if="product.diaRecibo"> &nbsp; -  {{ product.diaRecibo }}</span>
+                            </div>
+                        </div>
+                    </v-card-text>
+                    <v-card-actions>
+                        <v-btn color="primary" text @click="dialogItem = false">Cerrar</v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
+            <!-- </v-container> -->         
+
+            <v-container v-else>
+                <br>
+                <v-col>
+                    <v-btn prepend-icon="$vuetify" @click="dialogGasto = true">
+                        <v-icon>mdi-plus</v-icon> Añadir
+                        </v-btn>                
+                    </v-col>
+                <v-dialog v-model="dialogGasto" max-width="80%">
+                    <v-card elevation="3" variant="outlined">
+                        <v-card-title >Añadir Gasto</v-card-title>
+                        <v-card-text>
+                            <form @submit.prevent="SubmitGasto">
+                                <v-text-field label="Cantidad":rules="numberRules" v-model="cantidad_gasto"></v-text-field>
+                                <v-btn class="me-4" type="submit">submit</v-btn>
+                            </form>
+                        </v-card-text>
+                    </v-card>
+                </v-dialog>
+                <v-data-table :headers="gastosHeaders" :items="hojaGastos" item-key="id" hide-default-footer>
+                    <template v-slot:item.anio="{ item }">{{ item.anio }}</template>
+                    <template v-slot:item.mes="{ item }">{{ item.mes }}</template>
+                    <template v-slot:item.cantidad="{ item }">{{ item.cantidad }}</template>
+                </v-data-table>
+            </v-container>
+        </v-app>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            vuetify: new Vuetify(),
+            data() {
+                return {
+                  dialog: false,
+                  dialogGasto: false,
+                  dialogItem: false,
+                  menu2: false,
+                  cantidad_gasto: '',
+                  mostrarProgress: false,
+                  progressConfirm: false,
+                  search: '',
+                  date: '',
+                  name: '',
+                  img: '',
+                  empresa: '',
+                  seguimiento: '',
+                  precio: '',
+                  product: null,
+                  product_estado : null,
+                  //nombre	imagen	empresa	diaCompras	seguimiento	precio	estado
+                    headers: [
+                        { text: 'Nombre', value: 'nombre' },
+                        { text: 'Imagen', value: 'imagen' },
+                        { text: 'Empresa', value: 'empresa' },
+                        { text: 'Día de compra', value: 'diaDeCompra' },
+                        { text: 'No. seguimiento', value: 'seguimiento' },
+                        { text: 'Precio', value: 'precio' },
+                        { text: 'Estado', value: 'estado' },
+                    ],
+                    gastosHeaders: [
+            					{ text: 'Año', value: 'anio' },
+            					{ text: 'Mes', value: 'mes' },
+            					{ text: 'Cantidad', value: 'cantidad' }
+        						],
+                    loadingItem: {
+                			nombre: 'NA',
+                			imagen: 'NA',
+                			empresa: 'NA',
+                			diaDeCompra: 'NA',
+                			noSeguimiento: 'NA',
+                			precio: 'NA',
+                			estado: 'NA',
+              			},
+                    hoja1_copia: [],
+                    hoja1: [],
+                    hojaGastos: [],
+                    totalCompras: 0,
+                    totalAnioCompras:0,
+                    totalMes: 0,
+                    tab: 1,
+                    totalComprasFormatted: 0,
+                    totalAnioFormatted: 0,
+                    totalMesFormatted: 0,
+                    requiredRules: [(v) => !!v || "Agrega datos!"],
+                    imageRules: [ (v) => !!v || "Agrega datos!",(v) => !v || /\.(jpg|png|webp)$/.test(v.toLowerCase()) || "Sube un archivo JPG, PNG o formato WEBP"],
+                	numberRules : [ (v) => !!v || "Agrega datos!",(v) => !v || /^[0-9.]+$/.test(v) || "Solo numeros permitidos"],
+                };
+            },
+            mounted() {
+                this.fetchData();
+            },
+            methods: {
+                fetchData() {
+                    let url = 'https://script.google.com/macros/s/AKfycbystgoaWSVNMLje-s9_hOBIkzfzIbnfzh0w-uULD-NHsEZIPPRgLy-XhX5pL2dVQcIkxw/exec';
+                    this.hoja1 = [this.loadingItem];
+                    fetch(url)
+                        .then((response) => response.json())
+                        .then(json => {
+                            let hoja1 = json.content;
+                  					let datosFormateados = [];
+          									for (let i = 1; i < hoja1.length; i++) {
+            									let fila = hoja1[i];
+            									let objeto = {};
+            									objeto.nombre = fila[0];
+            									objeto.imagen = fila[1];
+            									objeto.empresa = fila[2];
+            									// Formatear la fecha
+            									let fecha = new Date(fila[3]);
+            									objeto.diaDeCompra = fecha.toLocaleDateString(); // Formato por defecto
+            									objeto.seguimiento = fila[4];
+            									objeto.precio = fila[5];
+            									objeto.estado = fila[6];
+                              objeto.diaRecibo = fila[7];
+            									datosFormateados.push(objeto);
+          									}
+          									this.hoja1 = datosFormateados;
+                            this.hoja1_copia = datosFormateados;
+                            console.log(this.hoja1);
+                        })
+                        .catch(error => {
+                            console.error('Error al obtener los datos:', error);
+                        });
+                  
+                  let gasto_table = "https://script.google.com/macros/s/AKfycbybRZPd0yUVPGFIqSQ5Rp6UKj_l9fQS5g4MxLCcxQueij0oQEZfsyOtRciHN1aDtfol/exec";
+                  
+                  fetch(gasto_table)
+                        .then((response) => response.json())
+                        .then(json => {
+                        		this.hojaGastos = json.content.slice(1).map(row => {
+            									let objeto = {};
+            									for (let i = 0; i < json.content[0].length; i++) {
+                								objeto[this.gastosHeaders[i].value] = row[i];
+            									}
+            									return objeto;
+        										});
+                            const currentDate = new Date();
+        										const currentYear = currentDate.getFullYear();
+    												const currentMonth = currentDate.getMonth() + 1;
+                            const gastos2024 = this.hojaGastos.filter(objeto => objeto.anio === currentYear);                          
+                            this.totalAnioCompras = gastos2024.reduce((total, objeto) => total + parseFloat(objeto.cantidad), 0);
+                        		this.totalAnioFormatted = this.totalAnioCompras.toLocaleString();
+                            const gastosMes = gastos2024.filter(objeto => objeto.mes === currentMonth);
+                            this.totalMes = gastosMes.reduce((total, objeto) => total + parseFloat(objeto.cantidad), 0);
+                            this.totalMesFormatted = this.totalMes.toLocaleString();
+                            //console.log(this.totalAnioCompras);
+                            //console.log(this.totalMes);
+                        })
+                        .catch(error => {
+                            console.error('Error al obtener los datos de gastos:', error);
+                        });
+                },
+
+                calcularTotalCompras() {
+                    this.totalCompras = this.hoja1.reduce((total, item) => total + parseFloat(item.precio), 0);
+                    this.totalComprasFormatted = this.totalCompras.toLocaleString();
+                },
+                updateTab(value) {
+					this.tab = value;
+    			},
+                fontSizeClass(totalCompras) {
+                //console.log("css: "+ totalCompras);
+    				const numDigits = totalCompras.toString().length;
+                    if (numDigits <= 3) {
+                //console.log("pequeño");
+      				return 'font-small';
+    				} else if (numDigits <= 6) {
+                //console.log("mediano");
+      				return 'font-medium';
+   					} else if (numDigits <= 9){
+      			//console.log("largo");
+                    return 'font-large';       
+    				} else {
+                //console.log("millon");
+      				return 'font-million'; 
+                  }
+  				},
+
+                submitForm() {
+                	if (!this.name || !this.img || !this.empresa || !this.date || !this.seguimiento || !this.precio) {
+        				alert('Por favor, completa todos los campos.');
+        				return; // Salir de la función si algún campo requerido está vacío
+    				}
+                	this.mostrarProgress = true;
+      					const scriptURL = 'https://script.google.com/macros/s/AKfycbxh0j8CROo9kU2Y0re5W2bPnLURh2jGj02SlvVHU2qcD2JpEfNidR0NRY-rYthDBuLaeQ/exec';
+      					const scriptGasto = 'https://script.google.com/macros/s/AKfycbzJ_GPU9B1l1ylzTpYKwpxvn63XVWEj6D1CqxgQrjDORTRvy36fa4wnStN8FNzkMrR4/exec';
+                    	const formData = new FormData();
+                        const formGastoData = new FormData();
+                        let cambio = false;
+      						formData.append('nombre', this.name);
+      						formData.append('imagen', this.img);
+      						formData.append('empresa', this.empresa);
+      						formData.append('diaCompras', this.date);
+      						formData.append('seguimiento', this.seguimiento);
+      						formData.append('precio', this.precio);
+     	 					formData.append('estado', 0);
+                  
+				    //nombre	imagen	empresa	diaCompras	seguimiento	precio	estado
+      					fetch(scriptURL, { method: 'POST', body: formData })
+        					.then((response) => {
+          					if (response.ok) {
+            					this.$refs.form.reset();
+                                cambio = true;
+          					} else {
+            					throw new Error('Hubo un problema al enviar el formulario');
+          					}
+        				})
+                    if(cambio = true){
+                        let partes = this.date.split('-');
+    						const anio = partes[0]; // Obtienes el año (2024)
+							let mes = parseInt(partes[1], 10).toString();
+                            formGastoData.append('anio', anio);
+                          	formGastoData.append('mes', mes);
+                  	        formGastoData.append('cantidad', this.precio);
+                            fetch(scriptGasto, { method: 'POST', body: formGastoData })
+                        .then((response) => {
+                    	    if (response.ok) {
+                    		    this.cantidad_gasto='';
+                              	this.dialog = false;
+                    		    alert("¡Gracias! ¡Tu formulario se ha enviado correctamente!");
+                    	    } else {
+                      	        throw new Error('No se pudo registrar el gasto, favor de agregar en "gastos" la cantidad');
+                    	    }   
+                        }).catch(error => console.error('Error!', error.message))
+                    .finally(() => {
+                		this.mostrarProgress = false; // Oculta el progreso después de cargar los datos
+            		});
+                    }
+    			},
+
+                SubmitGasto(){
+                	const scriptURL = 'https://script.google.com/macros/s/AKfycbzJ_GPU9B1l1ylzTpYKwpxvn63XVWEj6D1CqxgQrjDORTRvy36fa4wnStN8FNzkMrR4/exec';
+                  const formData = new FormData();
+                  const currentDate = new Date();
+        					const currentYear = currentDate.getFullYear();
+    							const currentMonth = currentDate.getMonth() + 1; // Sumar 1 porque los meses van de 0 a 11
+									formData.append('anio', currentYear);
+                  formData.append('mes', currentMonth);
+                  formData.append('cantidad', this.cantidad_gasto);
+                  fetch(scriptURL, { method: 'POST', body: formData })
+                  .then(response => {
+                  	if (response.ok) {
+                    	this.cantidad_gasto='';
+                      this.dialogGasto = false;
+                    	alert("¡Gracias! ¡Tu formulario se ha enviado correctamente!");
+                    } else {
+                      throw new Error('Network response was not ok.');
+                    }
+                  }).catch(error => console.error('Error!', error.message));
+                },
+
+                showName(item){
+                    this.product = item;
+                    this.product_estado = this.product.estado;
+                    console.log(item);
+                    console.log(this.product);
+                    this.dialogItem = true;
+                    console.log(this.product.diaRecibo);
+                    if(!(this.product.diaRecibo == "0")){
+                  	    const fecha = new Date(this.product.diaRecibo);
+						// Obtener los componentes de la fecha
+						const year = fecha.getFullYear();
+        				const month = ("0" + (fecha.getMonth() + 1)).slice(-2); // Agrega un cero al principio si es necesario									const day = ("0" + fecha.getDate()).slice(-2); // Agrega un cero al principio si es necesario
+                        // Formatear la fecha como "YYYY/MM/DD"
+						const fechaFormateada = '${year}/${month}/${date}';
+                 		console.log(fechaFormateada);
+                        this.product.diaRecibo = fechaFormateada;
+                    }else{
+                  	    console.log("No hay fecha");
+                    }  
+                //console.log(this.product.nombre);
+                },
+
+                confirmSwitchChange() {
+              	    const scriptURL = 'https://script.google.com/macros/s/AKfycbzKg39U7chqHUhwUDy2gkPA7CSxXrqPwEvwJZCj5ePf588JKUq_I54YoLKZQCytL3RwVg/exec';
+      			    let StateCopy = this.product_estado;
+                    console.log("copia tiene valor de : " + StateCopy);
+                    console.log(this.product);
+                    let confirmResult = confirm("¿Estás seguro de cambiar el estado?");
+                    console.log("En la confirmacion el valor fue : " + confirmResult);
+                    if (!confirmResult) {
+      					this.product_estado = !this.product_estado;
+      			    }else{
+                	    this.progressConfirm = true;
+                        const formData = new FormData();
+                        formData.append('tracking', this.product.seguimiento);
+                        const currentDate = new Date();
+      					const currentYear = currentDate.getFullYear();
+      				    const currentMonth = currentDate.getMonth() + 1;
+                        const currentDay = currentDate.getDate();
+                        const formattedDate = '${currentYear}/${currentMonth}/${currentDay}';
+
+                	if(StateCopy){
+                  	    console.log("se cambia el valor de ESTADO a 1");
+                        formData.append('newValue', "1");
+                  	    formData.append('deliveryDate', formattedDate);
+                        fetch(scriptURL, { method: 'POST', body: formData })
+                  	    .then((response) => {
+                  		if (response.ok) {
+      						this.progressConfirm = false;
+              				alert('¡El estado se ha actualizado correctamente!');
+            			} else {
+              				throw new Error('Hubo un problema al actualizar el estado');
+            			}
+                  	})
+                  	.catch((error) => {
+          				console.error('Error:', error);
+          				this.progressConfirm = false;
+          				alert('Hubo un problema al actualizar el estado');
+      					});
+                    }else{
+                  	    console.log("se cambia el valor de ESTADO a 0");
+                        formData.append('newValue', "0");
+                  	    formData.append('deliveryDate', "0");
+                        fetch(scriptURL, { method: 'POST', body: formData })
+                  	    .then((response) => {
+                  		if (response.ok) {
+      						this.progressConfirm = false;
+              				alert('¡El estado se ha actualizado correctamente!');
+            				}
+                        else {
+              			    throw new Error('Hubo un problema al actualizar el estado');
+            			}
+                  	    })  
+                  	.catch((error) => {
+          				console.error('Error:', error);
+          				this.progressConfirm = false;
+          				alert('Hubo un problema al actualizar el estado');
+      					});
+                    }
+                    this.product.estado = StateCopy ? 1 : 0;
+                    this.product.diaRecibo = formattedDate;
+                    }
+      		    },
+
+                searching(){
+              	    if(this.search && this.search.trim() !== ''){
+                	    const scriptURL = 'https://script.google.com/macros/s/AKfycbx_579eCbyEOSe457lXkpwIvhMYtK8grFVaDURJ24X9K4zGubOSe8l_r8fFA3LtczqRpQ/exec'; // Reemplaza esto con la URL correcta
+                        const formData = new FormData();
+                        const searchText = this.search.toUpperCase();
+                        this.hoja1 = [this.loadingItem];
+      				    formData.append('tracking', this.search);
+      				    formData.append('action', 'search');
+                	    console.log("se busca ", this.search);
+                        fetch(scriptURL, { method: 'POST', body: formData })
+                        .then((response) => {
+                  	        console.log(response);
+          					if (response.ok) {
+              				    return response.json();
+          					} else {
+              				    throw new Error('Hubo un problema al buscar el registro');
+          					}
+      					})
+                        .then((data) => {
+                  	        console.log(data.message);
+                            console.log(data);
+          					if (data.result === 'success') {
+              				    console.log('Registro encontrado:', data.product);
+                                let hoja1 = data.product;
+      							let datosFormateados = [];
+      							console.log(hoja1);
+                                console.log(hoja1[0]);
+                                let obj = {};
+          						obj.nombre = hoja1[0];
+          						obj.imagen = hoja1[1];
+          						obj.empresa = hoja1[2];
+                                let fecha = new Date(hoja1[3]);
+          						obj.diaDeCompra = fecha.toLocaleDateString(); // Formato por defecto
+          						obj.seguimiento = hoja1[4];
+          						obj.precio = hoja1[5];
+          						obj.estado = hoja1[6];
+                                datosFormateados.push(obj);
+                                this.hoja1 = datosFormateados;
+          					} else {
+              				    throw new Error(data.message);
+          					}
+      					})
+                        .catch((error) => {
+          					console.log('Error:' +  error);
+          					alert('Hubo un problema al buscar el registro: '  + error);
+      					});
+                    }else{
+                	    console.log("retorna a tabla 1");
+                        console.log(this.hoja1_copia);
+                        this.hoja1 = JSON.parse(JSON.stringify(this.hoja1_copia));
+                    }
+                },
+
+
+                /*
+                agregarCompra() {
+                    fetch('guardar_compra.php', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json',},
+                        body: JSON.stringify(this.nuevoArticulo),
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Ocurrió un error al agregar la compra.');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Compra agregada exitosamente:', data);
+                        // Aquí podrías actualizar la tabla con los nuevos datos si es necesario
+                        // Además, podrías restablecer el objeto nuevoArticulo a su estado inicial y cerrar el diálogo de añadir nuevo artículo
+                        this.nuevoArticulo = {
+                            nombre: '',
+                            imagen: '',
+                            empresa: '',
+                            fechaCompra: '',
+                            noSeguimiento: '',
+                            precio: ''
+                        };
+                        this.dialog = false;
+                    })
+                        .catch(error => {
+                            console.error('Error al agregar la compra:', error);
+                        });
+                },
+
+              
+                updateTab(value) {
+                    this.tab = value;
+                    console.log('Pestaña seleccionada:', this.tab);
+                },
+                fontSizeClass(totalCompras) {
+                    const numDigits = totalCompras.toString().length;
+                    if (numDigits <= 3) {
+                        return 'font-small';
+                    } else if (numDigits <= 6) {
+                        return 'font-medium';
+                    } else if (numDigits <= 9){
+                        return 'font-large';       
+                    } else {
+                        return 'font-million'; 
+                    }
+                },
+
+  
+                getErrorMessage(errorMessage) {
+                    if (Array.isArray(errorMessage)) {
+                        return errorMessage;
+                    } else if (typeof errorMessage === 'object' && errorMessage.value) {
+                        return errorMessage.value;
+                    } else {
+                        return '';
+                    }
+                }
+                */
+            
+            
+            },
+        });
+    </script>
+</body>
+</html>

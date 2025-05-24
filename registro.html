@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Registrar</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="login.css" />
+  </head>
+  <body>
+        <!--   Area de animacion de fondo-->
+        <div class="area">
+          <ul class="circles">
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+          </ul>
+          <!-- Fin de area de animacion de fondo-->
+    
+          <!-- Inicio de estructura del contenedor de login-->
+
+    <div class="container">
+      <div class="screen">
+        <div class="screen__content">
+          <div class="icono" style="text-align: center">
+            <img src="images2/6.svg" alt="Saving_purchase" />
+          </div>
+          <form action="php/registro.php" method="POST">
+            <div class="login">
+              <div class="login__field">
+                <input
+                  type="text"
+                  class="login__input"
+                  placeholder="&#x1f464; Usuario"  //placeholder=""   <--iconos
+                  name="nombre_user"
+                  required
+                />
+              </div>
+              <div class="login__field">
+                <input
+                  type="password"
+                  class="login__input"
+                  placeholder="&#x1f511; Contraseña" //placeholder=""   <--iconos
+                  name="pass_user"
+                  required
+                />
+              </div>
+              <div class="login_field">
+                <input
+                  type="email"
+                  class="login__input"
+                  placeholder="&#x2709;&#xfe0f; Correo"  //placeholder=""   <--iconos
+                  name="correo_user"
+                  required
+                />
+              </div>
+              <button
+                class="button login__submit"
+                type="submit"
+                name="registro"
+              >
+                <span class="button__text">Registrar</span>
+              </button>
+              <p class="mt-3">
+                <br />
+                Ya tienes una cuenta?<a href="login.html">
+                  Iniciar sesion</a
+                >
+              </p>
+            </div>
+          </form>
+        </div>
+        <div class="screen__background">
+          <span
+            class="screen__background__shape screen__background__shape4"
+          ></span>
+          <span
+            class="screen__background__shape screen__background__shape3"
+          ></span>
+          <span
+            class="screen__background__shape screen__background__shape2"
+          ></span>
+          <span
+            class="screen__background__shape screen__background__shape1"
+          ></span>
+        </div>
+      </div>
+    </div>
+  </body>
+
+  <!--
+  <body>
+    <div id="app">
+      <v-app>
+        <v-main>
+          <v-container>
+            <v-row justify="center">
+              <v-col cols="12" md="6">
+                <v-card style="max-width: 400px; margin: 20% auto">
+                  <v-card-title class="text-center">Registrar</v-card-title>
+                  <v-card-text>
+                    <form action="php/registro.php" method="POST">
+                      <!--<v-text-field name="nombre_user" label="Usuario"  type="text" prepend-icon="mdi-account" required></v-text-field>
+                                        <v-text-field name="pass_user" label="Contraseña" type="password" prepend-icon="mdi-lock" required></v-text-field>
+                                        <v-text-field name="correo_user" label="Correo" type="email" prepend-icon="mdi-email" required></v-text-field>
+                                        <v-btn color="primary" type="submit">Registrar</v-btn>-->
+  <!--
+                      <v-text-field
+                        type="text"
+                        prepend-icon="mdi-account"
+                        label="Usuario"
+                        name="nombre_user"
+                        required
+                      ></v-text-field>
+                      <v-text-field
+                        type="password"
+                        prepend-icon="mdi-lock"
+                        label="Contraseña"
+                        name="pass_user"
+                        required
+                      ></v-text-field>
+                      <v-text-field
+                        type="email"
+                        prepend-icon="mdi-email"
+                        label="Correo"
+                        name="correo_user"
+                        required
+                      ></v-text-field>
+                      <v-btn color="primary" type="submit" name="registro"
+                        >Registrar</v-btn
+                      >
+                    </form>
+                  </v-card-text>
+                  <v-card-actions>
+                    <p class="mt-3">
+                      ¿Ya tienes una cuenta?
+                      <a href="login.html">Iniciar sesión</a>
+                    </p>
+                  </v-card-actions>
+                </v-card>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-main>
+      </v-app>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <script>
+      new Vue({
+        el: "#app",
+        vuetify: new Vuetify(),
+        data() {
+          return {
+            username: "",
+            password: "",
+            email: "",
+          };
+        },
+        methods: {
+          register() {
+            // Implementa la lógica de registro aquí
+            console.log("Usuario:", this.username);
+            console.log("Contraseña:", this.password);
+            console.log("Correo:", this.email);
+          },
+        },
+      });
+    </script>
+  </body>
+--></html>
